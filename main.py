@@ -1,7 +1,5 @@
-
 from flask import Flask, request, jsonify
 import pandas as pd
-import io
 
 app = Flask(__name__)
 
@@ -14,7 +12,16 @@ def analisis_rendimiento():
     if file:
         try:
             df = pd.read_excel(file)
-            resumen = df.describe(include='all').to_dict()
+
+            # Limitar columnas para evitar respuesta demasiado grande
+            columnas_interes = ['Vistas', 'CTR', 'Subs', 'Comentarios', 'Ventas']
+            columnas_presentes = [col for col in columnas_interes if col in df.columns]
+
+            if columnas_presentes:
+                resumen = df[columnas_presentes].describe().to_dict()
+            else:
+                resumen = {"advertencia": "No se encontraron columnas esperadas para analizar."}
+
         except Exception as e:
             return jsonify({"error": "No se pudo leer el archivo Excel.", "detalle": str(e)}), 400
     else:
